@@ -1,0 +1,180 @@
+classDiagram
+    direction TB
+
+    class Date {
+        <<struct>>
+        +int day
+        +int month
+        +int year
+        +toString() string
+        +sameDay(Date) bool
+    }
+    class Location {
+        <<struct>>
+        +string ipAddress
+        +string country
+        +string city
+    }
+    class Severity {
+        <<enumeration>>
+        NONE
+        LOW
+        MEDIUM
+        HIGH
+        CRITICAL
+    }
+    class AccountStatus {
+        <<enumeration>>
+        ACTIVE
+        FROZEN
+        CLOSED
+        UNDER_REVIEW
+    }
+    class TxStatus {
+        <<enumeration>>
+        PENDING
+        COMPLETED
+        FLAGGED
+        REVERSED
+        BLOCKED
+    }
+
+    class Account {
+        <<abstract>>
+        #string accountID
+        #double balance
+        #string ownerName
+        #AccountStatus status
+        +getAccountID() string
+        +getBalance() double
+        +freeze() void
+        +unfreeze() void
+        +deposit(double) void
+        +withdraw(double) bool
+        +printDetails() void
+        +clone() Account
+    }
+    class CorporateAccount {
+        -string taxCode
+        -string companyType
+        +printDetails() void
+        +clone() Account
+    }
+    class RetailAccount {
+        -string IDCardNumber
+        +printDetails() void
+        +clone() Account
+    }
+
+    class Transaction {
+        <<abstract>>
+        #string transactionID
+        #double amount
+        #string senderID
+        #string receiverID
+        #TxStatus status
+        #Date date
+        #Location location
+        +getAmount() double
+        +reverse() void
+        +getDetails() string
+        +clone() Transaction
+    }
+    class TransferTransaction {
+        -string bankNetwork
+        -double fee
+        +getDetails() string
+        +clone() Transaction
+    }
+    class ForeignExchange {
+        #string sourceCurrency
+        #string targetCurrency
+        #double exchangeRate
+        +convertedAmount(double) double
+        +getExchangeInfo() string
+    }
+    class InternationalTransfer {
+        -string swiftCode
+        +getDetails() string
+        +clone() Transaction
+    }
+
+    class AuditRule {
+        <<interface>>
+        +evaluate(Transaction, DataManagement) AuditInspectionResult
+        +getRuleName() string
+        +getSeverity() Severity
+    }
+    class LargeAmountRule {
+        -double thresholdAlert
+    }
+    class SmurfingRule {
+        -int maxFrequencyPerDay
+        -double smallTxThreshold
+    }
+    class SanctionsRule {
+        -vector_string blacklist
+    }
+    class GeoAnomalyRule {
+        -vector_string highRiskCountries
+    }
+    class AuditInspectionResult {
+        +bool isPassed
+        +string transactionID
+        +string ruleViolated
+        +Severity severity
+        +string notes
+    }
+
+    class DataManagement {
+        -vector_Account_ptr accounts
+        -vector_Transaction_ptr transactions
+        +DataManagement()
+        +~DataManagement()
+        +DataManagement(const DataManagement)
+        +operator=(const DataManagement) DataManagement
+        +addAccount(Account_ptr) void
+        +getAccountByID(string) Account_ptr
+    }
+    class AuditEngine {
+        -vector_AuditRule_ptr rules
+        +addRule(AuditRule_ptr) void
+        +runAudit(DataManagement) vector
+    }
+    class FileManager {
+        +loadAccounts(string) vector
+        +loadTransactions(string) vector
+        +exportReport(vector, string) bool
+    }
+    class ConsoleUI {
+        -AuditEngine engine
+        -DataManagement db
+        -FileManager fileMgr
+        +runDemo(string, string) void
+        +displayMainMenu() void
+    }
+
+    Account <|-- CorporateAccount : Ke thua
+    Account <|-- RetailAccount : Ke thua
+    Transaction <|-- TransferTransaction : Ke thua
+    Transaction <|-- InternationalTransfer : Da ke thua
+    ForeignExchange <|-- InternationalTransfer : Da ke thua
+
+    Transaction *-- Date : occurs_on
+    Transaction *-- Location : executed_at
+
+    AuditRule <|.. LargeAmountRule : Trien khai
+    AuditRule <|.. SmurfingRule : Trien khai
+    AuditRule <|.. SanctionsRule : Trien khai
+    AuditRule <|.. GeoAnomalyRule : Trien khai
+
+    DataManagement "1" *-- "0..*" Account : Composition
+    DataManagement "1" *-- "0..*" Transaction : Composition
+    AuditEngine "1" o-- "0..*" AuditRule : Aggregation
+
+    ConsoleUI *-- AuditEngine
+    ConsoleUI *-- DataManagement
+    ConsoleUI *-- FileManager
+    AuditEngine ..> DataManagement : doc du lieu
+    AuditEngine ..> AuditInspectionResult : sinh bao cao
+    FileManager ..> AuditInspectionResult : ghi report

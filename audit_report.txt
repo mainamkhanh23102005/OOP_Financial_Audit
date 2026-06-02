@@ -1,0 +1,8 @@
+==== AUDIT REPORT ====
+Tong canh bao: 5
+
+[HIGH] Tx TX001 vi pham LargeAmountRule -> Giao dich vuot han muc 1000000
+[CRITICAL] Tx TX002 vi pham SmurfingRule -> Phat hien 4 giao dich nho/ngay tu ACC002
+[CRITICAL] Tx TX003 vi pham SmurfingRule -> Phat hien 4 giao dich nho/ngay tu ACC002
+[CRITICAL] Tx TX004 vi pham SmurfingRule -> Phat hien 4 giao dich nho/ngay tu ACC002
+[CRITICAL] Tx TX005 vi pham SmurfingRule -> Phat hien 4 giao dich nho/ngay tu ACC002
