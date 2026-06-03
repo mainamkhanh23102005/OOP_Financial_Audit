@@ -1,0 +1,117 @@
+\chapter{Theoretical Background and System Design}
+
+\section{Principles of Object-Oriented Programming}
+    Object-Oriented Programming (OOP) is a programming paradigm based on the concept of an ``object'' -- an entity that contains both data (attributes) and behaviour (methods). OOP is built on four fundamental principles \cite{Stroustrup2013}, all of which are applied in the group's system.
+
+    \subsection{Abstraction}
+    Abstraction is the act of hiding complex implementation details and exposing only the essential characteristics of an object. In C++, abstraction is expressed through an \textbf{abstract class} containing \textbf{pure virtual functions}. An abstract class cannot be instantiated directly; it merely serves as a template for derived classes. In the system, the classes \texttt{Account}, \texttt{Transaction} and the interface \texttt{AuditRule} are all abstract classes.
+
+    \subsection{Encapsulation}
+    Encapsulation is the bundling of data and the methods that operate on that data into a single unit (a class), while controlling external access. C++ provides three access levels: \texttt{private}, \texttt{protected}, and \texttt{public}. In the system, sensitive attributes such as the account balance (\texttt{balance}) or the transaction amount (\texttt{amount}) are declared \texttt{protected} so that derived classes can inherit them while they remain hidden from the outside, and can only be accessed through \texttt{public} methods such as \texttt{getBalance()}.
+
+    \subsection{Inheritance}
+    Inheritance allows one class (the derived class) to reuse the attributes and methods of another class (the base class), expressing an ``is-a'' relationship. The system uses both forms of inheritance:
+    \begin{itemize}
+        \item \textbf{Single inheritance:} For example, \texttt{CorporateAccount} inherits from \texttt{Account}.
+        \item \textbf{Multiple inheritance:} The class \texttt{InternationalTransfer} inherits simultaneously from \texttt{Transaction} and \texttt{ForeignExchange}, analysed in detail in Section~\ref{sec:multiple_inheritance}.
+    \end{itemize}
+
+    \subsection{Polymorphism}
+    Polymorphism allows objects of different classes to respond to the same method call in different ways. In C++, runtime polymorphism is implemented through \textbf{virtual functions} and the \textbf{dynamic dispatch} mechanism. When a virtual method is called through a pointer or reference to the base class, the compiler relies on the \textbf{virtual table} (vtable) and the \textbf{virtual pointer} (vptr) to determine and call the correct version of the method of the derived class at run time.
+
+    \begin{nx}
+    It must be noted in particular that runtime polymorphism \textbf{only works when an object is accessed through a pointer or reference}. If a derived-class object is stored by value in a base-class variable, the \textit{object slicing} phenomenon occurs: the data specific to the derived class is cut off and the dynamic dispatch mechanism no longer takes effect. This is why the system consistently uses pointers (\texttt{Account*}, \texttt{Transaction*}, \texttt{AuditRule*}) in all data containers.
+    \end{nx}
+
+\section{Overall System Architecture}
+    The system is designed following the Single Responsibility Principle (SRP) and the Open/Closed Principle (OCP) \cite{Martin2017}, and is divided into four independent functional modules. The overall UML class diagram of the system is presented in Figure~\ref{fig:uml_full}.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{uml_full.png}
+        \caption{Overall UML class diagram of the financial transaction management and audit system.}
+        \label{fig:uml_full}
+    \end{figure}
+
+    The four functional modules are:
+    \begin{itemize}
+        \item \textbf{Data Structs module:} Contains Plain-Old-Data (POD) structs such as \texttt{Date}, \texttt{Location} and the enumeration types (\texttt{enum class}) \texttt{Severity}, \texttt{AccountStatus}, \texttt{TxStatus}.
+        \item \textbf{Core Entities module:} Contains the classes \texttt{Account}, \texttt{Transaction} and their derived classes -- modelling the central business entities.
+        \item \textbf{Audit Rules module:} Contains the \texttt{AuditRule} interface and the concrete rules -- where polymorphism and extensibility are most clearly demonstrated.
+        \item \textbf{Engine \& IO module:} Contains the classes \texttt{DataManagement}, \texttt{AuditEngine}, \texttt{FileManager} and \texttt{ConsoleUI} -- responsible for orchestration, data management, and user interaction.
+    \end{itemize}
+
+\section{Design of the Core Entities Module}
+    \subsection{Account Class Hierarchy}
+    The \texttt{Account} class is an abstract class containing common \texttt{protected} attributes (account ID, balance, owner name, status) and a pure virtual function \texttt{printDetails()}. Two derived classes inherit from it:
+    \begin{itemize}
+        \item \texttt{CorporateAccount}: adds a tax code (\texttt{taxCode}) and a company type.
+        \item \texttt{RetailAccount}: adds an identity card number (\texttt{IDCardNumber}).
+    \end{itemize}
+    The \texttt{Account} class has a \textbf{virtual destructor} to ensure correct memory release when deleting a derived-class object through a base-class pointer. In addition, realistic banking methods such as \texttt{freeze()} (freezing a suspicious account), \texttt{deposit()}, and \texttt{withdraw()} are also added to more closely reflect banking operations.
+
+    \subsection{Transaction Class Hierarchy and Multiple Inheritance}
+    \label{sec:multiple_inheritance}
+    The \texttt{Transaction} class is also an abstract class containing the common information of a transaction and has a \textbf{composition} relationship with the two structs \texttt{Date} and \texttt{Location}. The derived class \texttt{TransferTransaction} models a domestic transfer.
+
+    The technical highlight is the class \texttt{InternationalTransfer}, which models an international transfer. An international transfer \textbf{is a transaction} (it needs a transaction ID, amount, sender, receiver) and at the same time \textbf{carries foreign-exchange characteristics} (it needs the source currency, target currency, exchange rate). Therefore, the group designed this class to inherit simultaneously from two classes:
+    \begin{itemize}
+        \item \texttt{Transaction}: provides the attributes and behaviour of a transaction.
+        \item \texttt{ForeignExchange}: provides currency-conversion capability through the \texttt{convertedAmount()} method.
+    \end{itemize}
+
+    \begin{nx}
+    Since the two base classes \texttt{Transaction} and \texttt{ForeignExchange} \textbf{do not share a common ancestor}, the \textbf{Diamond Problem does not occur}. Therefore, the system \textbf{does not need to use virtual inheritance}. This is a deliberate design decision aimed at keeping the structure simple and efficient.
+    \end{nx}
+
+\section{Design of the Audit Rules Module -- The Heart of Polymorphism}
+    This module most clearly demonstrates the power of polymorphism and the Open/Closed Principle. At its centre is the abstract interface \texttt{AuditRule}, which defines a pure virtual method \texttt{evaluate()}. Each concrete audit rule is a derived class that implements this method according to its own logic:
+    \begin{itemize}
+        \item \texttt{LargeAmountRule}: detects a transaction whose value exceeds a given threshold.
+        \item \texttt{SmurfingRule}: detects the cash-flow-splitting behaviour -- many small transactions on the same day from the same account.
+        \item \texttt{SanctionsRule}: checks the sender/receiver against a sanctions list.
+        \item \texttt{GeoAnomalyRule}: detects transactions originating from high-risk countries, making use of the information in the \texttt{Location} struct.
+    \end{itemize}
+
+    \begin{nx}
+    An important design observation: the \texttt{SmurfingRule} cannot draw a conclusion based on a single transaction alone, because the nature of splitting is the need to count the \textbf{frequency} of many transactions. Therefore, the \texttt{evaluate()} method is designed to also receive a reference to the entire data store (\texttt{DataManagement}), allowing each rule to access the historical context when needed. Rules that only need to examine a single transaction (such as \texttt{LargeAmountRule}) simply ignore this parameter. Unifying a single method signature for all rules is precisely the foundation that allows the polymorphism mechanism to operate smoothly.
+    \end{nx}
+
+    \subsection{Extensibility under the Open/Closed Principle}
+    Thanks to this polymorphic design, to add a new audit rule, a programmer only needs to create a new derived class of \texttt{AuditRule} and implement the \texttt{evaluate()} method. There is \textbf{no need to modify} the source code of \texttt{AuditEngine} or any other core component. The system is ``closed for modification but open for extension'' -- exactly in the spirit of the OCP.
+
+\section{Design of the Engine Module and Relationships Between Classes}
+    \subsection{The AuditEngine Class and the Aggregation Relationship}
+    The \texttt{AuditEngine} class holds a container of rule pointers \texttt{vector<AuditRule*>}. The scanning process is performed using two nested loops: for each transaction, \texttt{evaluate()} is called in turn on each rule. It is precisely at this call that the dynamic dispatch mechanism (vtable/vptr) automatically selects the correct rule version to execute.
+
+    The relationship between \texttt{AuditEngine} and \texttt{AuditRule} is an \textbf{Aggregation} relationship: \texttt{AuditEngine} has references to the rules and uses them, but does \textbf{not own} their lifetime. The rule objects are created externally and passed into the engine via the \texttt{addRule()} method.
+
+    \subsection{The DataManagement Class and the Composition Relationship}
+    In contrast, the \texttt{DataManagement} class has a \textbf{Composition} relationship with \texttt{Account} and \texttt{Transaction}: it \textbf{fully owns} these objects and is responsible for releasing them in its destructor. Because this class manages dynamic memory, it is designed following the Rule of Five (presented in Chapter 3).
+
+    \subsection{The FileManager and ConsoleUI Classes}
+    \texttt{FileManager} is responsible for reading data from CSV files and writing the report to a text file, implementing the requirement of storing data in files. \texttt{ConsoleUI} acts as the interface layer, orchestrating the entire user-interaction flow and connecting the three components \texttt{DataManagement}, \texttt{AuditEngine}, and \texttt{FileManager} together.
+
+\section{Summary of Applied OOP Techniques}
+    Table~\ref{tab:oop_techniques} summarises the object-oriented techniques applied in the system together with their corresponding locations.
+
+    \begin{table}[H]
+        \centering
+        \caption{Summary of OOP techniques applied in the system}
+        \label{tab:oop_techniques}
+        \begin{tabular}{|l|p{8cm}|}
+            \hline
+            \textbf{Technique} & \textbf{Location in the system} \\ \hline
+            Abstraction & Abstract classes \texttt{Account}, \texttt{Transaction}; interface \texttt{AuditRule} \\ \hline
+            Encapsulation & \texttt{protected}/\texttt{private} attributes accessed via getters \\ \hline
+            Single inheritance & \texttt{CorporateAccount}, \texttt{RetailAccount} inherit \texttt{Account} \\ \hline
+            Multiple inheritance & \texttt{InternationalTransfer} inherits \texttt{Transaction} and \texttt{ForeignExchange} \\ \hline
+            Polymorphism & Virtual methods \texttt{evaluate()}, \texttt{printDetails()}, \texttt{getDetails()} \\ \hline
+            Virtual destructor & In the base classes \texttt{Account}, \texttt{Transaction}, \texttt{AuditRule} \\ \hline
+            Operator overloading & \texttt{operator=} (copy and move) in \texttt{DataManagement} \\ \hline
+            Rule of Five & The \texttt{DataManagement} class managing dynamic memory \\ \hline
+            Composition & \texttt{DataManagement} owns \texttt{Account}, \texttt{Transaction} \\ \hline
+            Aggregation & \texttt{AuditEngine} references \texttt{AuditRule} \\ \hline
+            Enumeration (enum class) & \texttt{Severity}, \texttt{AccountStatus}, \texttt{TxStatus} \\ \hline
+        \end{tabular}
+    \end{table}

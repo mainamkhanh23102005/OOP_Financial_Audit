@@ -1,0 +1,176 @@
+\chapter{Implementation and Evaluation}
+
+\section{Project Source-Code Structure}
+    The project is organised into multiple separate files by module, corresponding to the group's Git branching model. Each class is split into a header file (\texttt{.h}) and an implementation file (\texttt{.cpp}), which reduces compilation dependencies and allows members to work in parallel. The directory structure and division of work are presented in Table~\ref{tab:phancong} at the end of this chapter.
+
+\section{Implementation of the Core Entities Module}
+    \subsection{The Abstract Account Class}
+    Listing~\ref{lst:account} illustrates the declaration of the abstract class \texttt{Account}. The \texttt{protected} attributes, the virtual destructor, the two pure virtual functions \texttt{printDetails()} and \texttt{clone()}, together with the business methods, can be clearly seen.
+
+\begin{lstlisting}[caption={Declaration of the abstract Account class}, label={lst:account}]
+class Account {                       // <<abstract>>
+protected:                            // protected for derived classes
+    std::string   accountID;
+    double        balance;
+    std::string   ownerName;
+    AccountStatus status;
+public:
+    Account(std::string id, std::string owner, double bal);
+    virtual ~Account() = default;     // virtual destructor
+
+    std::string   getAccountID() const;
+    double        getBalance()   const;
+    AccountStatus getStatus()    const;
+
+    // realistic banking operations
+    void freeze();
+    void unfreeze();
+    bool withdraw(double amt);
+
+    virtual void     printDetails() const = 0;   // pure virtual
+    virtual Account* clone()        const = 0;    // Virtual Constructor
+};
+\end{lstlisting}
+
+    \subsection{Multiple Inheritance in InternationalTransfer}
+    Listing~\ref{lst:intl} illustrates the multiple-inheritance syntax. The \texttt{InternationalTransfer} class inherits from both \texttt{Transaction} and \texttt{ForeignExchange}, and calls the constructors of both base classes in its initialiser list.
+
+\begin{lstlisting}[caption={Multiple inheritance in InternationalTransfer}, label={lst:intl}]
+// Multiple inheritance: Transaction + ForeignExchange
+// The two bases share no ancestor -> NO virtual inheritance needed
+class InternationalTransfer : public Transaction, public ForeignExchange {
+    std::string swiftCode;
+public:
+    InternationalTransfer(std::string id, double amt, std::string from,
+                          std::string to, Date d, Location loc,
+                          std::string src, std::string tgt,
+                          double rate, std::string swift)
+        : Transaction(id, amt, from, to, d, loc),
+          ForeignExchange(src, tgt, rate),
+          swiftCode(swift) {}
+    std::string  getDetails() const override;
+    Transaction* clone()      const override;
+};
+\end{lstlisting}
+
+\section{Implementation of the Audit Rules Module -- Polymorphism}
+    \subsection{The AuditRule Interface}
+    Listing~\ref{lst:auditrule} shows the abstract interface for all rules. Note that the \texttt{evaluate()} method receives a \texttt{const DataManagement\&} reference so that rules requiring historical context can access it.
+
+\begin{lstlisting}[caption={The abstract AuditRule interface}, label={lst:auditrule}]
+class AuditRule {                     // <<interface>>
+public:
+    virtual ~AuditRule() = default;
+    // Receives the DB so pattern-based rules can access history
+    virtual AuditInspectionResult evaluate(
+        const Transaction* t,
+        const DataManagement& db) const = 0;
+    virtual std::string getRuleName() const = 0;
+    virtual Severity    getSeverity() const = 0;
+};
+\end{lstlisting}
+
+    \subsection{Implementation of the Smurfing Detection Rule}
+    Listing~\ref{lst:smurfing} shows how \texttt{SmurfingRule} traverses the entire transaction history to count small transactions on the same day from the same sender -- which is only possible thanks to the \texttt{db} parameter.
+
+\begin{lstlisting}[caption={Smurfing detection logic}, label={lst:smurfing}]
+AuditInspectionResult SmurfingRule::evaluate(
+        const Transaction* t, const DataManagement& db) const {
+    AuditInspectionResult r; r.transactionID = t->getID();
+    if (t->getAmount() >= smallTxThreshold) return r; // only small tx
+    int count = 0;
+    for (auto* o : db.getTransactions())
+        if (o->getSenderID() == t->getSenderID()
+            && o->getDate().sameDay(t->getDate())
+            && o->getAmount() < smallTxThreshold) ++count;
+    if (count >= maxFrequencyPerDay) {
+        r.isPassed = false;
+        r.ruleViolated = getRuleName();
+        r.severity = getSeverity();
+    }
+    return r;
+}
+\end{lstlisting}
+
+    \subsection{The Polymorphic Audit Loop}
+    The heart of the system lies in the \texttt{runAudit()} method of \texttt{AuditEngine} (Listing~\ref{lst:runaudit}). The call \texttt{rule->evaluate(t, db)} is exactly where the dynamic dispatch mechanism takes effect: the same line of code executes different logic depending on the actual rule type.
+
+\begin{lstlisting}[caption={The audit loop with dynamic dispatch}, label={lst:runaudit}]
+std::vector<AuditInspectionResult>
+AuditEngine::runAudit(const DataManagement& db) const {
+    std::vector<AuditInspectionResult> out;
+    for (auto* t : db.getTransactions())
+        for (auto* rule : rules) {
+            // DYNAMIC DISPATCH: choose the right rule via vtable
+            AuditInspectionResult res = rule->evaluate(t, db);
+            if (!res.isPassed) out.push_back(res);
+        }
+    return out;
+}
+\end{lstlisting}
+
+\section{Memory Management -- The Rule of Five}
+    Because \texttt{DataManagement} owns dynamically allocated pointers, it must define five special functions for safe memory management: the destructor, the copy constructor, the copy assignment operator, the move constructor, and the move assignment operator. The challenge is that when copying a \texttt{vector<Account*>}, copying only the pointers would make two objects point to the same memory region (a \textit{shallow copy}), leading to a double-free error.
+
+    The solution is the \textbf{Virtual Constructor} idiom \cite{Gamma1994}: each derived class implements the virtual method \texttt{clone()} that returns a copy of the correct type of itself. Thanks to this, the copy constructor can perform a \textbf{polymorphic deep copy} as shown in Listing~\ref{lst:ruleof5}.
+
+\begin{lstlisting}[caption={Polymorphic deep copy via clone()}, label={lst:ruleof5}]
+void DataManagement::deepCopyFrom(const DataManagement& o) {
+    for (auto* a : o.accounts)
+        accounts.push_back(a->clone());      // copy as the derived type
+    for (auto* t : o.transactions)
+        transactions.push_back(t->clone());
+}
+DataManagement::~DataManagement() { freeAll(); }   // free everything
+\end{lstlisting}
+
+\section{Experimental Results}
+    \subsection{Interactive Interface}
+    The system provides an interactive menu that allows the user to enter data, view lists, select audit rules, and export reports. The menu also includes an integrated Help \& Guide option that explains the input format directly within the program. Figure~\ref{fig:menu} shows the main menu and the report-export operation.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{menu.png}
+        \caption{The interactive menu of the system and the report-export operation.}
+        \label{fig:menu}
+    \end{figure}
+
+    \subsection{Running the Audit}
+    After loading the sample data set of 4 accounts and 8 transactions, the user can select any combination of audit rules to run. Figure~\ref{fig:audit_output} illustrates the case where the \texttt{GeoAnomalyRule} is selected: the system correctly detects transaction \texttt{TX007} originating from Iran -- a high-risk country -- and flags it with a \texttt{MEDIUM} severity level. Each rule can be enabled independently, and selecting all four rules yields the full set of warnings.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{audit_output.png}
+        \caption{Selecting an audit rule and the corresponding detection result.}
+        \label{fig:audit_output}
+    \end{figure}
+
+    \subsection{Exported Report File}
+    The audit result is also exported to a plain-text file \texttt{audit\_report.txt}, fulfilling the requirement of storing data in files. Figure~\ref{fig:report_output} shows the content of the exported report, including the total number of warnings and a detailed description of each violation.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{report_output.png}
+        \caption{Content of the exported audit report file.}
+        \label{fig:report_output}
+    \end{figure}
+
+    \subsection{Memory Management Verification}
+    To prove that the program does not leak memory, the group recompiled it with the \texttt{-fsanitize=address,leak} flag and ran it. The AddressSanitizer tool confirmed that no memory leaks were detected, validating the correctness of the Rule of Five and the Virtual Constructor idiom.
+
+\section{Division of Work}
+    The group applies a feature-based Git branching model. The four members take charge of the four architectural modules; each member ``owns'' one OOP principle to present, ensuring no overlap and that every member participates in coding. The details are presented in Table~\ref{tab:phancong}.
+
+    \begin{table}[H]
+        \centering
+        \caption{Division of work and responsibilities of members}
+        \label{tab:phancong}
+        \begin{tabular}{|l|p{4cm}|p{3.8cm}|}
+            \hline
+            \textbf{Member} & \textbf{Files in charge} & \textbf{Key principle} \\ \hline
+            Mai Nam Khanh \textit{(Leader)} & \texttt{DataManagement}, \texttt{AuditEngine}, \texttt{FileManager}, \texttt{ConsoleUI} & Memory management, Aggregation, I/O \\ \hline
+            Hoang Le Anh Duc & \texttt{Account.h/.cpp} & Inheritance, Encapsulation \\ \hline
+            Vu Duy Tuan & \texttt{Transaction.h/.cpp}, \texttt{Common.h} & Multiple inheritance, Composition \\ \hline
+            Pham Duc Tri & \texttt{AuditRule.h/.cpp} & Abstraction, Polymorphism \\ \hline
+        \end{tabular}
+    \end{table}

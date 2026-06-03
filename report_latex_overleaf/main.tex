@@ -1,0 +1,181 @@
+\RequirePackage{fix-cm}
+\documentclass[12pt, oneside]{report}
+\usepackage{scrextend}
+\usepackage{mathptmx}
+\DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n}
+\changefontsizes{13pt}
+\usepackage[utf8]{vietnam}
+\usepackage{tikz, pgf} 
+\usetikzlibrary{patterns}
+\usetikzlibrary{calc}
+\usepackage{float}
+\usepackage{lipsum}
+\usepackage{longtable}
+
+\usepackage{imakeidx} 
+\makeatletter
+\renewcommand\subitem{\@idxitem\nobreak\hspace*{10\p@}}
+\renewcommand\subsubitem{\@idxitem\nobreak\hspace*{10\p@}\@idxsubitem\nobreak\hspace*{10\p@}}
+\makeatother
+\makeindex
+
+\usepackage[left=3.50cm, right=2cm, top=3.50cm, bottom=3.0cm, a4paper]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{indentfirst}
+\usepackage{booktabs}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{amsthm}
+\usepackage{subcaption}
+\usepackage[unicode]{hyperref}
+\renewcommand{\baselinestretch}{1.5}
+\usepackage{enumitem}
+\newcommand{\scaler}{0.7}
+\graphicspath{ {figures/} }
+\usepackage{array}
+\usepackage{url}
+\usepackage{adjustbox}
+
+% Source code formatting for C++
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codeblue}{rgb}{0.0,0.0,0.7}
+\definecolor{backcolour}{rgb}{0.96,0.96,0.96}
+\lstdefinestyle{cppstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=6pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    language=C++
+}
+\lstset{style=cppstyle}
+\renewcommand{\lstlistingname}{Listing}
+\renewcommand{\lstlistlistingname}{List of Listings}
+
+\hypersetup{colorlinks,linkcolor={black},citecolor={blue},urlcolor={red}}  \usepackage{multido}
+\newcommand{\Pointilles}[1]{%
+  \par\nobreak
+  \noindent\rule{0pt}{1.5\baselineskip}%
+  \multido{}{#1}{\noindent\makebox[\linewidth]{\dotfill}\endgraf}%
+  \bigskip%
+}
+
+\newtheorem{dn}{Definition}[chapter]
+\newtheorem{dl}{Theorem}[chapter]
+\newtheorem{hq}{Corollary}[chapter]
+\newtheorem{nx}{Remark}[chapter]
+\newtheorem{vd}{Example}[section]
+\renewcommand\qedsymbol{$\blacksquare$}
+
+\newcommand\diag{\text{Diag}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\usepackage[numbers,sort]{natbib}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{bm}
+\usepackage{fancyhdr}
+
+\input{titlepage2.tex}
+\title{DESIGN AND IMPLEMENTATION OF A FINANCIAL TRANSACTION MANAGEMENT \& AUDIT SYSTEM USING OBJECT-ORIENTED PROGRAMMING}
+\reporttype{TERM PROJECT REPORT}
+\major{Information Technology}
+\author{Mai Nam Khanh}
+\address{HANOI}
+\date{2026}
+\school{Information Technology}
+\supervisor{[Supervisor Name]}
+\class{TROY CS22A - K68}
+\email{khanh.mn@sis.hust.edu.vn}
+\specialize{Information Technology}
+\studentid{1695177}
+
+% English caption labels (override vietnam package defaults)
+\renewcommand{\figurename}{Figure}
+\renewcommand{\tablename}{Table}
+\renewcommand{\chaptername}{Chapter}
+
+\begin{document}
+\renewcommand{\figurename}{Figure}
+\renewcommand{\tablename}{Table}
+\renewcommand{\chaptername}{Chapter}
+
+\maketitle
+\makesubtitle
+
+\input{Content/nhanxet}
+\input{Content/camontomtat}
+
+\renewcommand{\contentsname}{Table of Contents}
+\tableofcontents
+
+\input{Content/viettat}
+
+\renewcommand{\listtablename}{List of Tables}
+\renewcommand{\listfigurename}{List of Figures}
+\listoftables
+\listoffigures
+\lstlistoflistings
+
+\newpage
+\pagestyle{fancy}
+\rhead{\fontsize{10pt}{18pt} \selectfont Introduction}
+\lhead{\fontsize{11pt}{18pt} \selectfont TERM PROJECT REPORT}
+\cfoot{\fontsize{13pt}{18pt} \selectfont \thepage}
+\input{Content/modau}
+
+\newpage
+\pagestyle{fancy}
+\rhead{\fontsize{10pt}{18pt} \selectfont \nouppercase{\leftmark}}
+\lhead{\fontsize{11pt}{18pt} \selectfont TERM PROJECT REPORT}
+\cfoot{\fontsize{13pt}{18pt} \selectfont \thepage}
+
+\input{Content/Chuong1.tex}
+\input{Content/Chuong2.tex}
+\input{Content/Chuong3.tex}
+
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+\subsection*{Achieved Results}
+Through the process of researching, designing, and implementing the topic ``Design and Implementation of a Financial Transaction Management \& Audit System using Object-Oriented Programming'', the group has achieved the following concrete results:
+
+\begin{itemize}
+    \item Successfully built a complete software system in C++ capable of managing accounts and transactions, and automatically detecting suspicious transactions based on an extensible set of audit rules.
+    \item Fully and correctly applied the core principles of Object-Oriented Programming: abstraction, encapsulation, single and multiple inheritance, and polymorphism through dynamic dispatch.
+    \item Applied advanced memory-management techniques in modern C++ (the Rule of Five and the Virtual Constructor idiom via \texttt{clone()}), ensuring the program is free of memory leaks, as verified using the AddressSanitizer tool.
+    \item Designed a software architecture compliant with the SOLID principles, in particular the Single Responsibility Principle and the Open/Closed Principle, making the system easy to maintain and extend.
+\end{itemize}
+
+\subsection*{Future Work}
+Building on this foundation, the system can be extended in the following directions:
+\begin{enumerate}
+    \item Replace the \texttt{double} type used to represent monetary values with a smallest-unit integer type (\texttt{int64\_t} cents) or a dedicated \texttt{Money} class, to eliminate floating-point rounding errors -- a mandatory requirement in real-world financial systems.
+    \item Integrate a relational database (MySQL, PostgreSQL) instead of CSV files to manage large data volumes and support complex queries.
+    \item Add advanced machine-learning-based audit rules (behavioural anomaly detection) and extend the system to a graphical user interface or a web service.
+\end{enumerate}
+
+\bibliographystyle{plain}
+\urlstyle{rm}
+\renewcommand{\bibname}{References}
+\bibliography{refs}
+
+\end{document}

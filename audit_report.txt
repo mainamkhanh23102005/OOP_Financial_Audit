@@ -1,4 +1,3 @@
 ==== AUDIT REPORT ====
-Tong canh bao: 1
+Tong canh bao: 0
 
-[MEDIUM] Tx TX007 vi pham GeoAnomalyRule -> Giao dich tu quoc gia rui ro cao: Iran

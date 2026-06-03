@@ -1,0 +1,53 @@
+\chapter{Project Overview}
+
+\section{Background and Significance of the Problem}
+    Modern financial systems process an enormous volume of transactions every day. In parallel, financial crimes have become increasingly sophisticated, causing significant economic damage and threatening the stability of the banking system. Among these crimes, \textbf{money laundering} is one of the most serious problems faced by financial institutions.
+
+    To evade the supervision of regulatory authorities, criminals often use the technique of \textbf{splitting cash flows} (\textit{smurfing} or \textit{structuring}): instead of conducting one large, easily detectable transaction, they divide the amount into many small transactions below the mandatory reporting threshold. In addition, transactions involving individuals or organisations on a sanctions list, or transactions originating from high-risk geographical regions, are also warning signs that require close monitoring.
+
+    Manual inspection is infeasible at large data scales. Therefore, financial institutions rely on \textbf{Anti-Money Laundering} (AML) software systems \cite{Chen2018AML} that can automatically scan all transactions and compare them against a set of business rules to detect suspicious cases.
+
+\section{Objectives and Scope}
+    \subsection{Objectives}
+    The project aims to build a \textbf{transaction audit engine} that simulates a real-world AML monitoring process, with two parallel objectives:
+
+    \begin{itemize}
+        \item \textbf{Business objective:} The system is able to manage a portfolio of accounts and transactions, then automatically scan and detect violating transactions based on several types of audit rules (large amount, smurfing, sanctions list, geographical anomaly).
+        \item \textbf{Technical objective:} To fully and correctly apply the principles of Object-Oriented Programming, building a software architecture with a high level of abstraction that is easy to maintain and especially \textbf{easy to extend} -- allowing new audit rules to be added without changing the core source code.
+    \end{itemize}
+
+    \subsection{Scope}
+    Within the framework of a course term project, the system focuses on the core business-logic processing and the object-oriented architecture, operating on a command-line (console) interface. Input data is loaded from CSV files or entered directly by the user; audit results are displayed on screen and exported to a plain-text report file.
+
+\section{System Requirements}
+    Based on the term project specification, the system must satisfy the following requirements:
+
+    \begin{enumerate}
+        \item \textbf{Data stored in files:} Account and transaction data must be able to be read from and written to files.
+        \item \textbf{Maximum use of OOP techniques:} The program must demonstrate fundamental principles such as Abstraction, Inheritance, and Polymorphism, along with several advanced techniques.
+        \item \textbf{At least four object classes:} The system must have at least four classes; in practice, the group's system has about fourteen classes and structures.
+        \item \textbf{Clear division of work:} Each member is responsible for a specific portion of the source code and participates in the coding process.
+    \end{enumerate}
+
+    \subsection{Main Functions}
+    The system provides the following interactive functions for the user:
+    \begin{itemize}
+        \item Add a new account (a retail account or a corporate account).
+        \item Add a new transaction (a domestic transfer or an international transfer).
+        \item Display the list of existing accounts and transactions.
+        \item Select audit rules and run the automatic scanning process.
+        \item Export the audit result report to a file.
+        \item Quickly load a sample data set from CSV files for demonstration.
+    \end{itemize}
+
+\section{Tools and Development Environment}
+    The project was developed using the following environment and toolset:
+    \begin{itemize}
+        \item \textbf{Programming language:} C++, using the C++17 standard.
+        \item \textbf{Compiler:} GCC (g++) via the w64devkit toolset on the Windows operating system.
+        \item \textbf{Editor:} Visual Studio Code.
+        \item \textbf{Version control:} Git and GitHub, applying a feature-branching model so that members can work in parallel.
+        \item \textbf{Testing tool:} AddressSanitizer is used to verify memory management and ensure there are no leaks.
+    \end{itemize}
+
+    Using Git with a feature-branching model allows the four members of the group to work simultaneously on the four architectural modules (see Chapter 2). Each member develops on a separate branch (for example \texttt{feature/core-entities}, \texttt{feature/audit-rules}) and merges into the main branch through Pull Requests, which helps minimise source-code conflicts.
