@@ -2,7 +2,7 @@
 #include <string>
 #include "Common.h"
 
-// ===== MODULE B: feature/core-entities (Thanh vien 1) =====
+// ===== MODULE B: feature/core-entities =====
 class Account {                       // <<abstract>>
 protected:
     std::string   accountID;
@@ -11,7 +11,7 @@ protected:
     AccountStatus status;
 public:
     Account(std::string id, std::string owner, double bal);
-    virtual ~Account() = default;     // virtual destructor
+    virtual ~Account() = default;
 
     std::string   getAccountID() const;
     double        getBalance()   const;
@@ -24,8 +24,8 @@ public:
     void deposit(double amt);
     bool withdraw(double amt);
 
-    virtual void     printDetails() const = 0;   // pure virtual
-    virtual Account* clone()        const = 0;    // Virtual Constructor idiom
+    virtual void     printDetails() const = 0;
+    virtual Account* clone()        const = 0;
 };
 
 class CorporateAccount : public Account {
@@ -33,6 +33,10 @@ class CorporateAccount : public Account {
 public:
     CorporateAccount(std::string id, std::string owner, double bal,
                      std::string tax, std::string type);
+    // getters
+    std::string getTaxCode()     const { return taxCode; }
+    std::string getCompanyType() const { return companyType; }
+
     void     printDetails() const override;
     Account* clone()        const override;
 };
@@ -41,6 +45,9 @@ class RetailAccount : public Account {
     std::string IDCardNumber;
 public:
     RetailAccount(std::string id, std::string owner, double bal, std::string idCard);
+    // getter
+    std::string getIDCard() const { return IDCardNumber; }
+
     void     printDetails() const override;
     Account* clone()        const override;
 };

@@ -1,3 +1,11 @@
 ==== AUDIT REPORT ====
-Tong canh bao: 0
+Tong canh bao: 8
 
+[HIGH] Tx TX001 vi pham LargeAmountRule -> Giao dich vuot han muc 1000000000
+[CRITICAL] Tx TX002 vi pham SmurfingRule -> Phat hien 4 giao dich nho/ngay tu ACC002
+[CRITICAL] Tx TX003 vi pham SmurfingRule -> Phat hien 4 giao dich nho/ngay tu ACC002
+[CRITICAL] Tx TX004 vi pham SmurfingRule -> Phat hien 4 giao dich nho/ngay tu ACC002
+[CRITICAL] Tx TX005 vi pham SmurfingRule -> Phat hien 4 giao dich nho/ngay tu ACC002
+[CRITICAL] Tx TX006 vi pham SanctionsRule -> Lien quan tai khoan trong danh sach cam van
+[MEDIUM] Tx TX007 vi pham GeoAnomalyRule -> Giao dich tu quoc gia rui ro cao: Iran
+[HIGH] Tx TX100 vi pham LargeAmountRule -> Giao dich vuot han muc 1000000000

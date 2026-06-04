@@ -2,15 +2,15 @@
 #include <string>
 #include "Common.h"
 
-// ===== MODULE B: feature/transactions (Thanh vien 2) — Da ke thua + Composition =====
+// ===== MODULE B: feature/transactions =====
 class Transaction {                   // <<abstract>>
 protected:
     std::string transactionID;
     double      amount;
     std::string senderID, receiverID;
     TxStatus    status;
-    Date        date;                 // Composition
-    Location    location;             // Composition
+    Date        date;
+    Location    location;
 public:
     Transaction(std::string id, double amt, std::string from, std::string to,
                 Date d, Location loc);
@@ -24,9 +24,9 @@ public:
     Location    getLocation()   const;
     TxStatus    getStatus()     const;
     void        setStatus(TxStatus s);
-    void        reverse();            // chargeback / hoan tien
+    void        reverse();
 
-    virtual std::string  getDetails() const = 0;   // pure virtual
+    virtual std::string  getDetails() const = 0;
     virtual Transaction* clone()      const = 0;
 };
 
@@ -36,11 +36,15 @@ class TransferTransaction : public Transaction {
 public:
     TransferTransaction(std::string id, double amt, std::string from, std::string to,
                         Date d, Location loc, std::string net, double f);
+    // getters
+    std::string getBankNetwork() const { return bankNetwork; }
+    double      getFee()         const { return fee; }
+
     std::string  getDetails() const override;
     Transaction* clone()      const override;
 };
 
-// Base 2 cho da ke thua (mixin xu ly ty gia)
+// Base 2 cho da ke thua
 class ForeignExchange {
 protected:
     std::string sourceCurrency, targetCurrency;
@@ -48,17 +52,25 @@ protected:
 public:
     ForeignExchange(std::string src, std::string tgt, double rate);
     virtual ~ForeignExchange() = default;
+    // getters
+    std::string getSourceCurrency() const { return sourceCurrency; }
+    std::string getTargetCurrency() const { return targetCurrency; }
+    double      getExchangeRate()   const { return exchangeRate; }
+
     double      convertedAmount(double a) const;
     std::string getExchangeInfo() const;
 };
 
-// DA KE THUA: Transaction + ForeignExchange (khong diamond -> khong can virtual inheritance)
+// Da ke thua: Transaction + ForeignExchange (khong diamond -> khong can virtual inheritance)
 class InternationalTransfer : public Transaction, public ForeignExchange {
     std::string swiftCode;
 public:
     InternationalTransfer(std::string id, double amt, std::string from, std::string to,
                           Date d, Location loc, std::string src, std::string tgt,
                           double rate, std::string swift);
+    // getter
+    std::string getSwiftCode() const { return swiftCode; }
+
     std::string  getDetails() const override;
     Transaction* clone()      const override;
 };
